@@ -1,0 +1,59 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>  
+<script type="text/javascript">
+var chart;
+window.onload = function () {
+    chart = new CanvasJS.Chart("chartContainer",
+    {
+        zoomEnabled: true,
+        animationEnabled: true,
+        title:{
+            text: "100,000 Data Points! Zoom-in And Observe Axis Labels" 
+        },
+        axisX :{
+            labelAngle: -30
+        },
+        axisY :{
+            includeZero:false
+        },
+        data: data  
+    });
+    chart.render();
+}
+
+    
+    var limit = 100000;    
+
+    var y = 0;
+    var data = []; var dataSeries = { type: "line" };
+    var dataPoints = [];
+    for (var i = -limit/2; i <= limit/2; i++) {
+        y += (Math.random() * 10 - 5);
+        dateTime = new Date(1960, 08, 15);
+
+        // dateTime.setMilliseconds(dateTime.getMilliseconds() + i);
+        // dateTime.setSeconds(dateTime.getSeconds() + i);
+        // dateTime.setMinutes(dateTime.getMinutes() + i);
+        // dateTime.setHours(dateTime.getHours() + i);
+        dateTime.setDate(dateTime.getDate() + i);
+        // dateTime.setMonth(dateTime.getMonth() + i);
+        // dateTime.setFullYear(dateTime.getFullYear() + i);
+
+        dataPoints.push({
+            x: dateTime,
+            y: y
+        });
+    }
+
+    dataSeries.dataPoints = dataPoints;
+    data.push(dataSeries);               
+
+</script>
+<script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</head>
+<body>
+<div id="chartContainer" style="height: 300px; width: 100%;"></div>
+</body>
+</html>
