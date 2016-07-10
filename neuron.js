@@ -12,6 +12,10 @@ var Neuron = (function() {
     return Neuron;
 })();
 
+Neuron.prototype.getIndex = function() {
+    return this.neuron_id;
+};
+
 Neuron.prototype.getDendriteOutputSum = function() {
     var value = 0;
     for(var i = 0; i<this.dendrites.length; i++)

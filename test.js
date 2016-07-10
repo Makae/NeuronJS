@@ -25,7 +25,7 @@ var inputs = [
 ];
 
 var network = new NeuronalNetwork(inputs, Utilities.Thresholds.Sigmoid());
-network.addHiddenLayer(1);
+network.addLayer(1);
 
 var inputs = input_axions;
 var output = network.getOutputNeuron().getAxion();

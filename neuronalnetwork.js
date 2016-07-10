@@ -3,7 +3,7 @@ function NeuronalNetwork(input, threshold_function) {
     this.threshold_function = threshold_function;
 }
 
-NeuronalNetwork.prototype.addHiddenLayer = function(num_neurons) {
+NeuronalNetwork.prototype.addLayer = function(num_neurons) {
     var layer = [];
 
     for(var i = 0; i < num_neurons; i++) {

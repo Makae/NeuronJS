@@ -12,6 +12,10 @@ var Dendrite = (function() {
     return Dendrite;
 })();
 
+Dendrite.prototype.getIndex = function() {
+    return this.dendrite_id;
+};
+
 Dendrite.prototype.getOutput = function() {
     return this.axion.getOutput() * this.weight;
 };
