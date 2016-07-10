@@ -43,8 +43,12 @@ NeuronalNetwork.prototype.getDendrites = function() {
     return dendrites;
 };
 
-NeuronalNetwork.prototype.getOutputNeuron = function() {
-    return this.getLayer(this.numLayers() - 1)[0];
+NeuronalNetwork.prototype.getOutputNeurons = function() {
+    return this.getLayer(this.numLayers() - 1);
+};
+
+NeuronalNetwork.prototype.getLayers = function(index) {
+    return this.layers;
 };
 
 NeuronalNetwork.prototype.getLayer = function(index) {

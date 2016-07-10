@@ -15,6 +15,10 @@ Axion.prototype.getIndex = function() {
     return this.axion_id;
 };
 
+Axion.prototype.setNeuron = function(neuron) {
+    this.neuron = neuron;
+};
+
 Axion.prototype.getNeuron = function() {
     return this.neuron;
 };
@@ -24,8 +28,11 @@ Axion.prototype.getOutput = function(dendrite) {
 };
 
 function InputAxion(value) {
+    Axion.apply(this, []);
     this.value = value;
 }
+
+InputAxion.prototype = Object.create(Axion.prototype)
 
 InputAxion.prototype.getOutput = function() {
     return this.value;
@@ -34,8 +41,4 @@ InputAxion.prototype.getOutput = function() {
 InputAxion.prototype.setOutput = function(value) {
     this.value = value;
     return this;
-};
-
-InputAxion.prototype.getNeuron = function() {
-    return null;
 };

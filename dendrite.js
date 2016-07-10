@@ -20,6 +20,10 @@ Dendrite.prototype.getOutput = function() {
     return this.axion.getOutput() * this.weight;
 };
 
+Dendrite.prototype.getAxion = function() {
+    return this.axion;
+};
+
 Dendrite.prototype.setWeight = function(weight) {
     this.weight = weight;
     return this;

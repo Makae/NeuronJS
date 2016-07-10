@@ -2,17 +2,21 @@
 <html>
     <head>
         <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
+        <script src="http://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.js"></script>
+        <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
         <script type="text/javascript" src="utilities.js?a=4"></script> 
         <script type="text/javascript" src="neuron.js?a=4"></script> 
         <script type="text/javascript" src="axion.js?a=4"></script> 
         <script type="text/javascript" src="dendrite.js?a=4"></script> 
         <script type="text/javascript" src="neuronalnetwork.js?a=4"></script> 
         <script type="text/javascript" src="training.js?a=4"></script> 
+        <script type="text/javascript" src="visualizer.js?a=4"></script> 
         <script type="text/javascript" src="test.js?a=4"></script>
+
+        <link type="text/css" rel="stylesheet" ref="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.css"></style>
     </head>
     <body>
-        <div id="graph">
-            
-        </div>
+        <div id="network" style="width: 100%; height: 500px;"></div>
+        <div id="chart"></div>
     </body>
 </html>

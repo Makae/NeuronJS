@@ -32,9 +32,8 @@ NetworkTraining.prototype.getOutputAxions = function() {
 };
 
 NetworkTraining.prototype.setInputValues = function(set) {
-    for(var i = 0; i < set.length-1; i++) {
+    for(var i = 0; i < set.length-1; i++)
         this.inputs[i].setOutput(set[i]);
-    }
 };
 
 NetworkTraining.prototype.initializeWeights = function() {
@@ -44,7 +43,7 @@ NetworkTraining.prototype.initializeWeights = function() {
 
 NetworkTraining.prototype.getOutputs = function() {
     var outputs = [];
-    for(var i = 0; i < this.outputs.length; i++) {
+    for(var i = 0; i < this.outputs.length; i++)
         outputs.push(this.outputs[i].getOutput());
     return outputs;
 };
@@ -79,26 +78,39 @@ NetworkTraining.prototype.unpause = function() {
  * For more Informations check:
  * https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
  */
-NetworkTraining.prototype.backwardsPropagation = function(error, outputs, targets, new_weights) {
-    // Outputs
-    var output_axions = this.getOutputAxions();
-    var e_tot__weight_k,
+NetworkTraining.prototype.backwardPropagation = function(error, output_axions, targets) {
+    var axion_error_sum = {};
+    // If we precalculate the output axion error we can use a generic propagation function
+    // for training the network. A lot of code looks the same
+    for(var i = 0; i < output_axions.length; i++) {
+        var o_axion = output_axions[i];
+        // Error contribution in regards of the current output axion
+        axion_error_sum[o_axion.getIndex()] = -(target[i] - o_axion.getOutput())
+    }
+    var new_weights = this._recursiveBackwardPropagation(output_axions, axion_error_sum);
+};
+
+NetworkTraining.prototype._recursiveBackwardPropagation = function(axions, axion_error_sum, new_weights) {
+    new_weights = new_weights || {};
+
+    // Read as "Derivative of E_total by the weight k"
+    var etot__weight_k,
         etot__out_i, 
         etot__net_i, 
-        delta_i,
+        output_hi,
+        delta_hi,
         delta_weight,
-        etot_out_h,
-        axion_error_sum = {};
-
-    for(var i = 0; i < output_axions.length; i++) {
-        // Error contribution in regards of the current output-axion
-        etot__out_i = -(target[i] - outputs[i]);
+        etot_out_h;
+        
+    for(var i = 0; i < axions.length; i++) {
+        etot__out_i = axion_error_sum[axions[i].getIndex()];
 
         // Error contribution in regards of the sigmoid function
-        etot__net_i = outputs[i] * (1 - outputs[i]);
+        output_hi = axions[i].getOutput();
+        etot__net_i = output_hi * (1 - output_hi);
 
         // Error contribution for all incomming weighted dendrites
-        delta_i = etot__out_i * etot__net_i;
+        delta_hi = etot__out_i * etot__net_i;
 
         var dendrites = output_axions[i].getDendrites();
         for(var k = 0; k < dendrites.length; k++) {
@@ -110,64 +122,20 @@ NetworkTraining.prototype.backwardsPropagation = function(error, outputs, target
         } 
     }
 
-
-    var axions = {};
-    for(var i = 0; i < output_axions.length; i++) {
-        var dendrites = output_axions[i].getNeuron().getDendrites();
+    var next_axions = {};
+    for(var i = 0; i < axions.length; i++) {
+        var dendrites = axions[i].getNeuron().getDendrites();
         for(var k = 0; k < dendrites.length; k++) {
             var axion = dendrites[k].getAxion();
 
-            if(typeof axions[neuron.getIndex()] != 'undefined')
-                continue;
-
-            axions[neuron.getIndex()] = axion;
+            next_axions[neuron.getIndex()] = axion;
         }
     }
 
-    // Hidden Layers
-    var propagate = function(axions, axion_error_sum, new_weights) {
-        var etot__weight_hk,
-            etot__out_hi, 
-            etot__net_hi, 
-            output_hi,
-            delta_hi,
-            delta_weight,
-            etot_out_h,
-            axion_error_sum = {};
-            
-        for(var i = 0; i < axions.lenth; i++) {
-            etot__out_hi = axion_error_sum[axions[i].getIndex()];
+    if(next_axions.length)
+        return new_weights;
 
-            // Error contribution in regards of the sigmoid function
-            output_hi = axions[i].getOutput();
-            etot__net_hi = output_hi * (1 - output_hi);
-
-            // Error contribution for all incomming weighted dendrites
-            delta_hi = etot__out_hi * etot__net_hi;
-
-            var dendrites = output_axions[i].getDendrites();
-            for(var k = 0; k < dendrites.length; k++) {
-                // Error contribution based on the weight of the dendrite
-                etot__weight_hk = dendrites[i].getOutput() * delta_hi;
-                axion_error_sum[dendrites[i].getAxion().getIndex()] += e_tot__weight_k
-                new_weights[dendrites[i].getIndex()] =  dendrites[i].getWeight() - this.rate * e_tot__weight_k;
-            } 
-        }
-
-        var next_axions = {};
-        for(var i = 0; i < axions.length; i++) {
-            var dendrites = axions[i].getNeuron().getDendrites();
-            for(var k = 0; k < dendrites.length; k++) {
-                var axion = dendrites[k].getAxion();
-
-                if(typeof axions[neuron.getIndex()] != 'undefined')
-                    continue;
-
-                next_axions[neuron.getIndex()] = axion;
-            }
-        }
-    };
-    propagate(axions, axion_error_sum, new_weights)
+    return this._recursiveBackwardPropagation(axions, axion_error_sum, new_weights);
 };
 
 NetworkTraining.prototype.train = function(training_set, admissible, step_speed) {
@@ -194,7 +162,7 @@ NetworkTraining.prototype.train = function(training_set, admissible, step_speed)
             // Forward Pass
             error = self.getError(targets, outputs);
 
-            self.backwardsPropagation(error, outputs);
+            self.backwardPropagation(error, self.getOutputAxions(), targets);
 
             self._trigger('training_tupel', {
                 'set_idx' : i,
@@ -240,4 +208,4 @@ NetworkTraining.prototype._execute = function(run, step_speed) {
         while(!run());
         self._trigger('finish');
     }
-};    
+};

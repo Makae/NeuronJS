@@ -30,6 +30,8 @@ Neuron.prototype.addDendrite = function(dendrite) {
 
 Neuron.prototype.setAxion = function(axion) {
     this.axion = axion;
+    this.axion.setNeuron(this);
+
     return this;
 };
 
@@ -43,4 +45,8 @@ Neuron.prototype.getAxion = function() {
 
 Neuron.prototype.getDendrites = function() {
     return this.dendrites;
+};
+
+Neuron.prototype.hasDendrites = function() {
+    return this.dendrites.length > 0;
 };
