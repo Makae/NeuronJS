@@ -1,3 +1,4 @@
+var NJS_TEST_MODUS = 1;
 // Binary A xor B
 
 // var training_set = [
@@ -8,10 +9,11 @@
 // ];
 
 var training_set = [
-    [0, 0, 0],
-    [0, 1, 0],
-    [1, 0, 0],
-    [1, 1, 1],
+//  i1, i2, output
+    [[0, 0], [0]],
+    [[0, 1], [0]],
+    [[1, 0], [0]],
+    [[1, 1], [1]]
 ];
 
 var input_axions = [
@@ -24,25 +26,28 @@ var inputs = [
     (new Neuron()).setAxion(input_axions[1]),
 ];
 
-var network = new NeuronalNetwork(inputs, Utilities.Thresholds.Sigmoid());
+var network_visualizer;
+var network = new NeuronalNetwork(inputs, Utilities.Thresholds.Sigmoid);;
+
 network.addLayer(2);
-network.addLayer(2);
-network.addLayer(2);
+// network.addLayer(2);
+// network.addLayer(2);
 network.addLayer(1);
 
 var inputs = input_axions;
-var output_neurons = network.getOutputNeurons();
+var output_axions = network.getOutputAxions();
 var dendrites = network.getDendrites();
 var learn_rate = 0.05;
-var admissible = 0.02;
+var admissible = 0.1;
+var step_speed = 10;
+var training;
 
-function init_chart() {
+function start_training() {
 
-    var training = new NetworkTraining(inputs, dendrites, output_neurons, learn_rate);
+    training = new NetworkTraining(inputs, dendrites, output_axions, learn_rate);
 
     var chart;
     var plot_data = [];
-
 
     training.addEventListener('finish', function(data) {
 
@@ -53,14 +58,21 @@ function init_chart() {
             'set_idx' : data.set_idx,
             'value1' :  data.tupel[0],
             'value2' :  data.tupel[1],
-            'target' : data.target,
-            'output' : data.output,
+            'target_values' :  data.target_values,
+            'output' :  data.output,
         }]);
     });
     training.addEventListener('training_tupel_end', function(data) {
         console.table(data.training.getDendrites());
     });
 
+    training.addEventListener('after_input_change', function(data) {
+        network_visualizer.updateNetwork();
+    });
+    training.addEventListener('after_fwd_pass', function(data) {
+        network_visualizer.updateNetwork();
+    });
+    
     training.addEventListener('loop', function(data) {
         var dendrites = data.training.getDendrites();
         var new_plot_data = [];
@@ -72,11 +84,9 @@ function init_chart() {
 
         }
         chart.render();
-        console.log("===================");
-        console.log("===== LOOPEND =====");
-        console.log("===================");
     });
-    var dendrites = training.getDendrites();
+
+    dendrites = training.getDendrites();
     var line;
     for(var i = 0; i < dendrites.length; i++) {
         line = { type: "line" };
@@ -101,16 +111,33 @@ function init_chart() {
         data: plot_data  
     });
     chart.render();
+
+    training.train(training_set, admissible, step_speed);
 }
 
-function init_graph() {
+function test_setup() {
     var nv_container = document.getElementById('network');
-    var nv = new NetworkVisualizer(nv_container, network);
-    nv.show();
+    network_visualizer = new NetworkVisualizer(nv_container, network);
+    network_visualizer.init();
 }
 
-window.onload = function () {
-    // init_chart();
-    init_graph();
-    //training.train(training_set, admissible);    
-};
+function test_run() {
+    start_training();
+}
+
+function test_setup_n_run() {
+    test_setup();
+    start_training();
+}
+
+var pause = false;
+function test_toggle_pause() {
+    if(pause) {
+        document.querySelector("#pause").text = "Pause (running)";
+        training.unpause();
+    } else {
+        document.querySelector("#pause").text = "Run (in pause)";
+        training.pause();
+    }
+    pause = !pause;
+}

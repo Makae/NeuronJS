@@ -16,6 +16,12 @@
         <link type="text/css" rel="stylesheet" ref="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.css"></style>
     </head>
     <body>
+        <div id="controls">
+            <button id="setup" onclick="test_setup();">Setup</button>
+            <button id="run" onclick="test_run();">Run</button>
+            <button id="setup_n_run" onclick="test_setup_n_run();">Setup & Run</button>
+            <button id="pause" onclick="test_toggle_pause();">Pause (running)</button>
+        </div>
         <div id="network" style="width: 100%; height: 500px;"></div>
         <div id="chart"></div>
     </body>

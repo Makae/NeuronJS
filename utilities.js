@@ -5,10 +5,8 @@ var Utilities = {
 };
 
 Utilities.Thresholds = {
-    Sigmoid : function() {
-        return function(x) {
-            return 1 / (1 + Math.pow(Math.E, -x));
-        }
+    Sigmoid : function(x) {
+        return 1 / (1 + Math.pow(Math.E, -x));
     },
 
     Identity : function(x) {

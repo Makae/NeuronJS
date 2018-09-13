@@ -47,6 +47,17 @@ NeuronalNetwork.prototype.getOutputNeurons = function() {
     return this.getLayer(this.numLayers() - 1);
 };
 
+NeuronalNetwork.prototype.getOutputAxions = function() {
+    var neurons = this.getOutputNeurons();
+    var axions = [];
+    
+    for(var i = 0; i < neurons.length; i++) {
+        axions.push(neurons[i].getAxion());
+    }
+    return axions;
+};
+
+
 NeuronalNetwork.prototype.getLayers = function(index) {
     return this.layers;
 };
