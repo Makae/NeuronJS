@@ -44,7 +44,7 @@ NeuronalNetwork.prototype.getDendrites = function() {
 };
 
 NeuronalNetwork.prototype.getOutputNeurons = function() {
-    return this.getLayer(this.numLayers() - 1);
+    return this.getLastLayer();
 };
 
 NeuronalNetwork.prototype.getOutputAxions = function() {
@@ -60,6 +60,14 @@ NeuronalNetwork.prototype.getOutputAxions = function() {
 
 NeuronalNetwork.prototype.getLayers = function(index) {
     return this.layers;
+};
+
+NeuronalNetwork.prototype.getFirstLayer = function() {
+    return this.layers[0];
+};
+
+NeuronalNetwork.prototype.getLastLayer = function() {
+    return this.layers[this.numLayers() - 1];
 };
 
 NeuronalNetwork.prototype.getLayer = function(index) {

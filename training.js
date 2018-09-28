@@ -1,7 +1,4 @@
-function NetworkTraining(input_neurons, dendrites, output_axions, rate) {
-    this.inputs = input_neurons;
-    this.dendrites = dendrites;
-    this.output_axions = output_axions;
+function NetworkTraining(network, rate) {
     this.rate = rate;
     this.event_listeners = {};
     this.paused = false;
@@ -20,15 +17,15 @@ NetworkTraining.prototype._trigger = function(name, data) {
 };
 
 NetworkTraining.prototype.getInputNeurons = function() {
-    return this.inputs;
+    return this.network.getInputNeurons();
 };
 
 NetworkTraining.prototype.getDendrites = function() {
-    return this.dendrites;
+    return this.network.getDendrites();
 };
 
 NetworkTraining.prototype.getOutputAxions = function() {
-    return this.output_axions;
+    return this.network.getOutputAxions();
 };
 
 NetworkTraining.prototype.setInputValues = function(set) {
@@ -38,33 +35,35 @@ NetworkTraining.prototype.setInputValues = function(set) {
 };
 
 NetworkTraining.prototype.initializeWeights = function() {
-    if(false && NJS_TEST_MODUS) {
+    if(NJS_TEST_MODUS) {
         var weight;
-        for(var i = 0; i < this.dendrites.length; i++) {
-            var z = (i + 1) % 8;
-            // 0.111, 0.222 ... 0.888
+        var dendrites = this.getDendrites();
+        for(var i = 0; i < dendrites.length; i++) {
+            var z = Math.floor((Math.random() * 10));
+             // 0.111, 0.222 ... 0.888
             weight = ("" + z + z + z) / 1000;
-            this.dendrites[i].setWeight(weight);
+            dendrites[i].setWeight(weight);
         }
         return; 
     }
-    for(var i = 0; i < this.dendrites.length; i++) {
-        this.dendrites[i].setWeight((Math.random() - 0.5) / 10);
+    for(var i = 0; i < dendrites.length; i++) {
+        dendrites[i].setWeight((Math.random()/* - 0.5 */) / 10);
     }
 };
 
 NetworkTraining.prototype.getOutputValues = function() {
     var output_values = [];
-    for(var i = 0; i < this.output_axions.length; i++)
-        output_values.push(this.output_axions[i].getOutput());
+    var output_axions = this.getOutputAxions();
+    for(var i = 0; i < output_axions.length; i++)
+        output_values.push(output_axions[i].getOutput());
     return output_values;
 };
 
-NetworkTraining.prototype.calculateMultivalueError = function(target_values, output_values) {
-    var error = 0;
-    for(var i = 0; i < output_values.length; i++)
-        error += this.calculateError(target_values[i], output_values[i]);
-    return error;
+NetworkTraining.prototype.calculateMultivalueError = function(existing_errors, target_values, output_values) {
+    for(var i = 0; i < output_values.length; i++) {
+        existing_errors[i] += this.calculateError(target_values[i], output_values[i]);
+    }
+    return existing_errors;
 };
 
 /**
@@ -90,18 +89,28 @@ NetworkTraining.prototype.unpause = function() {
  * For more Informations check:
  * https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
  */
-NetworkTraining.prototype.backwardPropagation = function(error, output_axions, targets) {
-    var axion_error_sum = {};
-    // If we precalculate the output axion error we can use a generic propagation function
-    // for training the network. A lot of code looks the same
-    for(var i = 0; i < output_axions.length; i++) {
-        var o_axion = output_axions[i];
-        // Error contribution in regards of the current output axion
-        axion_error_sum[o_axion.getIndex()] = -(targets[i] - o_axion.getOutput())
+NetworkTraining.prototype.backwardPropagation = function(output_errors, layer_idx) {
+    var layer_neurons = this.network.getLayer(layer_idx);
+    var previous_neurons = layer_idx > 0 ? this.network.getLayer(layer_idx - 1) : null;
+    /*
+        1. For each neuron in layer calculate the partial error of it's previous
+           predecessor.
+        2. Store this partial value in an error sum
+    */
+    var previous_layer_errors = {};
+    var previous_dendrite_list = {};
+    for(var i = 0; i < layer_neurons.length; i++) {
+        var neuron = layer_neurons[i];
+        var neuron_error = output_errors[i];
+        var dendrites = neuron.getDendrites();
+        for(var n = 0; n < dendrites.length; n++) {
+            previous_layer_errors[dendrites[n].getAxion().getNeuron().getIndex()] += neuron_error * dendrites[n].getWeight();
+        }
     }
-    var new_weights = this._recursiveBackwardPropagation(output_axions, axion_error_sum);
-    this.adjustWeights(new_weights);
+    
+    this.adjustWeights(previous_layer_errors);
 };
+
 
 NetworkTraining.prototype._recursiveBackwardPropagation = function(axions, axion_error_sum, new_weights) {
     new_weights = new_weights || {};
@@ -153,9 +162,9 @@ NetworkTraining.prototype._recursiveBackwardPropagation = function(axions, axion
     return this._recursiveBackwardPropagation(next_axions, axion_error_sum, new_weights);
 };
 
-NetworkTraining.prototype.adjustWeights = function(new_weights) {
-    for(var i = 0; i < this.dendrites.length; i++) {
-        var dendrite_idx = this.dendrites[i].getIndex();
+NetworkTraining.prototype.adjustWeights = function(dendrites, new_weights) {
+    for(var i = 0; i < dendrites.length; i++) {
+        var dendrite_idx = dendrites[i].getIndex();
         if(isNaN(new_weights[dendrite_idx]) || typeof new_weights[dendrite_idx] === 'undefined') {
             continue;
         }
@@ -167,18 +176,16 @@ NetworkTraining.prototype.train = function(training_set, admissible, step_speed)
     var self = this;
     var result, targets, tupel, expectation, delta_weights, error;
     var admissible = admissible || 0.02;
-    var total_error = 1000; 
     var ctr = 0;
     var step_speed = step_speed === false ? false : step_speed;
 
     self.initializeWeights();
 
     var step = function() {
-        if(total_error <= admissible)
-            return true;
 
         ctr++;
-        delta_weights = Utilities.getNumberArray(0, self.dendrites.length);
+        node_errors = Utilities.getNumberArray(0, self.dendrites.length);
+        error = 0;
         for(var i = 0; i < training_set.length; i++) {
             tupel  = training_set[i];
             self.setInputValues(tupel[0]);
@@ -190,35 +197,28 @@ NetworkTraining.prototype.train = function(training_set, admissible, step_speed)
             
             // Forward Pass (reset the weights)
             output_values = self.getOutputValues();
-            error = self.calculateMultivalueError(target_values, output_values);
             self._trigger('after_fwd_pass', {
                 'set_idx' : i,
                 'tupel' : tupel,
                 'target_values' : target_values,
                 'output_values' : output_values
             });
-
-            self.backwardPropagation(error, self.getOutputAxions(), target_values);
-
-            self._trigger('training_tupel', {
-                'set_idx' : i,
-                'tupel' : tupel,
-                'target_values' : target_values,
-                'output_values' : output_values
-            });
-
-
-
-            self._trigger('training_tupel_end', {
-                'set_idx' : i
-            });
+            node_errors = self.calculateMultivalueError(node_errors, target_values, output_values);
         }
 
-        self._trigger('loop', {
-            'error' : total_error,
+        for(var f in node_errors) {
+            error += node_errors[f];
+        }
+        self._trigger('after_error_calculation', {
+            'error' : error,
             'loop_idx' : ctr,
-            'delta_weights' : delta_weights
+            'node_errors' : node_errors
         });
+
+        if(-admissible <= error && error <= admissible) {
+            return true;
+        }
+        self.backwardPropagation(node_errors, this.network.numLayers() - 1);
 
         return false;
     };

@@ -2,9 +2,10 @@ var Neuron = (function() {
     
     var NEURON_CTR = 0;
 
-    function Neuron(axion, dendrites) {
+    function Neuron(bias, axion, dendrites) {
         this.neuron_id = NEURON_CTR++;
 
+        this.bias = bias || 0;
         this.dendrites = dendrites || [];
         this.axion = axion ||null;
     }
@@ -20,12 +21,16 @@ Neuron.prototype.getDendriteOutputSum = function() {
     var value = 0;
     for(var i = 0; i<this.dendrites.length; i++)
         value += this.dendrites[i].getOutput();
-    return value;
+    return value + this.bias;
 };
 
 Neuron.prototype.addDendrite = function(dendrite) {
     this.dendrites.push(dendrite);
     return this;
+};
+
+Neuron.prototype.setBias = function(bias) {
+    this.bias = bias;
 };
 
 Neuron.prototype.setAxion = function(axion) {

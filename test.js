@@ -30,21 +30,21 @@ var network_visualizer;
 var network = new NeuronalNetwork(inputs, Utilities.Thresholds.Sigmoid);;
 
 network.addLayer(2);
-// network.addLayer(2);
-// network.addLayer(2);
+network.addLayer(2);
+network.addLayer(2);
 network.addLayer(1);
 
 var inputs = input_axions;
 var output_axions = network.getOutputAxions();
 var dendrites = network.getDendrites();
 var learn_rate = 0.05;
-var admissible = 0.1;
-var step_speed = 10;
+var admissible = 0.2;
+var step_speed = 1000;
 var training;
 
 function start_training() {
 
-    training = new NetworkTraining(inputs, dendrites, output_axions, learn_rate);
+    training = new NetworkTraining(network, learn_rate);
 
     var chart;
     var plot_data = [];
@@ -53,7 +53,11 @@ function start_training() {
 
     });
 
-    training.addEventListener('training_tupel', function(data) {
+    training.addEventListener('after_input_change', function(data) {
+        network_visualizer.updateNetwork();
+    });
+
+    training.addEventListener('after_fwd_pass', function(data) {
         console.table([{
             'set_idx' : data.set_idx,
             'value1' :  data.tupel[0],
@@ -62,18 +66,12 @@ function start_training() {
             'output' :  data.output,
         }]);
     });
-    training.addEventListener('training_tupel_end', function(data) {
-        console.table(data.training.getDendrites());
-    });
 
-    training.addEventListener('after_input_change', function(data) {
-        network_visualizer.updateNetwork();
-    });
     training.addEventListener('after_fwd_pass', function(data) {
         network_visualizer.updateNetwork();
     });
     
-    training.addEventListener('loop', function(data) {
+    training.addEventListener('after_error_calculation', function(data) {
         var dendrites = data.training.getDendrites();
         var new_plot_data = [];
         for(var i = 0; i < dendrites.length; i++) {
@@ -84,6 +82,7 @@ function start_training() {
 
         }
         chart.render();
+        network_visualizer.updateNetwork();
     });
 
     dendrites = training.getDendrites();
